@@ -1,4 +1,4 @@
-<script  lang="ts">
+<script lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import LoginView from './views/login/LoginView.vue'
 
@@ -7,27 +7,36 @@ export default {
   components: {
     LoginView,
     RouterLink,
-    RouterView
+    RouterView,
   },
   data: function () {
     return {
-      isAuthenticated: false
+      isAuthenticated: false,
     }
+  },
+  mounted() {
+    console.log('mounted')
+  },
+  beforeCreate() {
+    console.log('beforeCreate')
+  },
+  beforeMount() {
+    console.log('beforeMount')
   },
   created() {
     if (this.isAuthenticated) {
-      this.$router.push("/home");
+      this.$router.push('/home')
     }
   },
   methods: {
     logout() {
-      this.isAuthenticated = false;
+      this.isAuthenticated = false
     },
     checkAuth(auth) {
       console.log('Authenticated!', auth)
-      this.isAuthenticated = auth;
-    }
-  }
+      this.isAuthenticated = auth
+    },
+  },
 }
 </script>
 
@@ -38,7 +47,7 @@ export default {
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
       </div>
-      <button @click="logout();">Logout</button>
+      <button @click="logout()">Logout</button>
     </header>
 
     <RouterView />
