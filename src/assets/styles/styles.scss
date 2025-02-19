@@ -2,10 +2,8 @@
 @use './spacing.scss';
 @use './fonts.scss';
 
-
-
 // Global Styles Here
 body {
-    background-color: colors.$colors-background;
-    color: colors.$colors-general-text;
+  background-color: colors.$colors-background;
+  color: colors.$colors-general-text;
 }

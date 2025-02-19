@@ -14,15 +14,6 @@ export default {
       isAuthenticated: false,
     }
   },
-  mounted() {
-    console.log('mounted')
-  },
-  beforeCreate() {
-    console.log('beforeCreate')
-  },
-  beforeMount() {
-    console.log('beforeMount')
-  },
   created() {
     if (this.isAuthenticated) {
       this.$router.push('/home')
