@@ -32,9 +32,7 @@ export const movies = {
           commit('addMovie', movie)
           return Promise.resolve(movie)
         },
-        (response) => {
-          return Promise.resolve(response)
-        }
+        (error) => Promise.reject(error)
       )
     },
     getMovie({ commit }, id) {
@@ -54,20 +52,16 @@ export const movies = {
           commit('updateMovie', movie)
           return Promise.resolve(movie)
         },
-        (response) => {
-          return Promise.resolve(response)
-        }
+        (error) => Promise.reject(error)
       )
     },
     deleteMovie({ commit }, id) {
       return movieService.deleteMovie(id).then(
         () => {
-          commit('removeMovie', id)
+          commit('deleteMovie', id)
           return Promise.resolve()
         },
-        (response) => {
-          return Promise.resolve(response)
-        }
+        (error) => Promise.reject(error)
       )
     },
   },
@@ -81,14 +75,14 @@ export const movies = {
     addMovie(state, movie) {
       state.movies.push(movie)
     },
-    updateMovie(state, movie) {
-      const index = state.movies.findIndex((m) => m.id === movie.id)
+    updateMovie(state, updatedMovie) {
+      const index = state.movies.findIndex((movie) => movie.id === updatedMovie.id)
       if (index !== -1) {
-        state.movies.splice(index, 1, movie)
+        state.movies.splice(index, 1, updatedMovie)
       }
     },
-    removeMovie(state, id) {
-      state.movies = state.movies.filter((movie) => movie.id !== id)
+    deleteMovie(state, movieId) {
+      state.movies = state.movies.filter((movie) => movie.id !== movieId)
     },
   },
   getters: {

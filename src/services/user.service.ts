@@ -14,7 +14,18 @@ class UserService {
     return axios
       .post(API_URL + 'user/upload_avatar', formData, { headers: authHeader('multipart') })
       .then((response) => {
-        return response.data.results
+        if (response.data && response.data.results) {
+          return response.data.results
+        }
+        return { avatar: null }
+      })
+      .catch((error) => {
+        console.error('Upload error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers,
+        })
+        throw error
       })
   }
   removeAvatar() {

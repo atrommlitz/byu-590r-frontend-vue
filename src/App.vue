@@ -88,12 +88,14 @@ export default {
       this.$store
         .dispatch('user/uploadAvatar', image[0], { root: true })
         .then((response) => {
-          this.$store.commit('auth/uploadAvatarSuccess', response.avatar)
+          if (response && response.avatar) {
+            this.$store.commit('auth/uploadAvatarSuccess', response.avatar)
+          }
           this.profileIsUploading = false
         })
         .catch((error) => {
-          console.log(error)
-          alert('Error. Try again')
+          console.error('Upload error:', error)
+          alert('Failed to upload image. Please try again.')
           this.profileIsUploading = false
         })
     },
@@ -115,14 +117,19 @@ export default {
       this.profile.name = this.authUser.name
 
       this.profile.title = this.title
-      this.$store.dispatch('user/getUser').then((response) => {
-        if (response.avatar) {
-          this.$store.commit('auth/uploadAvatarSuccess', response.avatar)
-        }
-        if (!response.email_verified_at) {
-          this.showEmailNotVerifiedDialog = true
-        }
-      })
+      this.$store
+        .dispatch('user/getUser')
+        .then((response) => {
+          if (response && response.avatar !== undefined) {
+            this.$store.commit('auth/uploadAvatarSuccess', response.avatar)
+          }
+          if (response && !response.email_verified_at) {
+            this.showEmailNotVerifiedDialog = true
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching user:', error)
+        })
     },
     checkAuth(auth) {
       console.log('Authenticated!', auth)

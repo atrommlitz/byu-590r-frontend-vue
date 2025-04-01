@@ -6,13 +6,28 @@ export default defineComponent({
 
   data() {
     return {
-      newMovie: {
+      dialog: false,
+      deleteDialog: false,
+      valid: true,
+      editedIndex: -1,
+      editedItem: {
         title: '',
         year: new Date().getFullYear(),
         genre: '',
-        file: '',
-        movie_length: 0,
+        movie_length: '',
+        file: null,
       },
+      defaultItem: {
+        title: '',
+        year: new Date().getFullYear(),
+        genre: '',
+        movie_length: '',
+        file: null,
+      },
+      fileRules: [
+        (v) => !!v || 'Poster is required',
+        (v) => !v || v.size < 2000000 || 'Poster size should be less than 2 MB!',
+      ],
     }
   },
 
@@ -37,22 +52,75 @@ export default defineComponent({
       await this.$store.dispatch('movies/fetchMovies')
     },
 
-    async handleSubmit() {
-      try {
-        await this.$store.dispatch('movies/createMovie', this.newMovie)
-        // Reset form after successful submission
-        this.newMovie = {
-          title: '',
-          year: new Date().getFullYear(),
-          genre: '',
-          file: '',
-          movie_length: 0,
+    openCreateDialog() {
+      this.editedIndex = -1
+      this.editedItem = Object.assign({}, this.defaultItem)
+      this.dialog = true
+    },
+
+    openEditDialog(movie) {
+      this.editedIndex = this.movies.indexOf(movie)
+      this.editedItem = {
+        id: movie.id,
+        title: movie.title,
+        year: movie.year,
+        genre: movie.genre,
+        movie_length: movie.movie_length,
+        file: movie.file,
+      }
+      this.dialog = true
+    },
+
+    openDeleteDialog(movie) {
+      this.editedIndex = this.movies.indexOf(movie)
+      this.editedItem = Object.assign({}, movie)
+      this.deleteDialog = true
+    },
+
+    async save() {
+      if (this.$refs.form.validate()) {
+        try {
+          if (this.editedIndex > -1) {
+            console.log('Updating movie:', this.editedItem)
+            await this.$store.dispatch('movies/updateMovie', {
+              id: this.editedItem.id,
+              movieData: this.editedItem,
+            })
+          } else {
+            await this.$store.dispatch('movies/createMovie', this.editedItem)
+          }
+          this.close()
+          await this.getMovies()
+        } catch (error) {
+          console.error('Error saving movie:', error)
         }
-        // Refresh movies list
+      }
+    },
+
+    async deleteItemConfirm() {
+      try {
+        await this.$store.dispatch('movies/deleteMovie', this.editedItem.id)
+        this.closeDelete()
         await this.getMovies()
       } catch (error) {
-        console.error('Error creating movie:', error)
+        console.error('Error deleting movie:', error)
       }
+    },
+
+    close() {
+      this.dialog = false
+      this.$nextTick(() => {
+        this.editedItem = Object.assign({}, this.defaultItem)
+        this.editedIndex = -1
+      })
+    },
+
+    closeDelete() {
+      this.deleteDialog = false
+      this.$nextTick(() => {
+        this.editedItem = Object.assign({}, this.defaultItem)
+        this.editedIndex = -1
+      })
     },
   },
 })

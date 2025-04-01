@@ -10,9 +10,18 @@ class MovieService {
   }
 
   createMovie(movieData) {
-    return axios.post(API_URL + 'movies', movieData, { headers: authHeader() }).then((response) => {
-      return response.data.results
-    })
+    const formData = new FormData()
+    formData.append('file', movieData.file)
+    formData.append('title', movieData.title)
+    formData.append('year', movieData.year.toString())
+    formData.append('genre', movieData.genre)
+    formData.append('movie_length', movieData.movie_length.toString())
+
+    return axios
+      .post(API_URL + 'movies', formData, {
+        headers: authHeader('multipart'),
+      })
+      .then((response) => response.data.results)
   }
 
   getMovie(id) {
@@ -22,17 +31,35 @@ class MovieService {
   }
 
   updateMovie(id, movieData) {
+    const formData = new FormData()
+    if (movieData.file && movieData.file instanceof File) {
+      formData.append('file', movieData.file)
+    }
+    formData.append('title', movieData.title)
+    formData.append('year', movieData.year.toString())
+    formData.append('genre', movieData.genre)
+    formData.append('movie_length', movieData.movie_length.toString())
+
     return axios
-      .put(API_URL + 'movies/' + id, movieData, { headers: authHeader() })
-      .then((response) => {
-        return response.data.results
+      .put(API_URL + `movies/${id}`, formData, {
+        headers: {
+          ...authHeader(),
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then((response) => response.data.results)
+      .catch((error) => {
+        console.error('Update movie error:', error)
+        throw error
       })
   }
 
   deleteMovie(id) {
-    return axios.delete(API_URL + 'movies/' + id, { headers: authHeader() }).then((response) => {
-      return response.data.results
-    })
+    return axios
+      .delete(API_URL + `movies/${id}`, {
+        headers: authHeader(),
+      })
+      .then((response) => response.data.results)
   }
 }
 
