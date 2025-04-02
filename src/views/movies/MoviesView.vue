@@ -43,7 +43,7 @@
           {{ editedIndex === -1 ? 'New Movie' : 'Edit Movie' }}
         </v-card-title>
         <v-card-text>
-          <v-form ref="form" v-model="valid">
+          <v-form ref="form">
             <v-text-field
               v-model="editedItem.title"
               label="Title"
@@ -72,8 +72,16 @@
               accept="image/*"
               label="Movie Poster"
               prepend-icon="mdi-camera"
+              :required="editedIndex === -1"
+              :hint="
+                editedIndex !== -1 && currentFileName ? 'Current file: ' + currentFileName : ''
+              "
+              :persistent-hint="editedIndex !== -1 && currentFileName !== ''"
             ></v-file-input>
           </v-form>
+          <v-alert v-if="errorMessage" type="error" dismissible @click="errorMessage = ''">
+            {{ errorMessage }}
+          </v-alert>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>

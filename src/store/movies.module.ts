@@ -47,13 +47,18 @@ export const movies = {
       )
     },
     updateMovie({ commit }, { id, movieData }) {
-      return movieService.updateMovie(id, movieData).then(
-        (movie) => {
+      console.log('Store updateMovie action:', { id, movieData })
+      return movieService
+        .updateMovie(id, movieData)
+        .then((movie) => {
+          console.log('Update successful, committing:', movie)
           commit('updateMovie', movie)
           return Promise.resolve(movie)
-        },
-        (error) => Promise.reject(error)
-      )
+        })
+        .catch((error) => {
+          console.error('Store update error:', error)
+          return Promise.reject(error)
+        })
     },
     deleteMovie({ commit }, id) {
       return movieService.deleteMovie(id).then(
@@ -67,7 +72,7 @@ export const movies = {
   },
   mutations: {
     setMovies(state, movies) {
-      state.movies = movies
+      state.movies = [...movies]
     },
     setMovie(state, movie) {
       state.movie = movie
@@ -78,7 +83,9 @@ export const movies = {
     updateMovie(state, updatedMovie) {
       const index = state.movies.findIndex((movie) => movie.id === updatedMovie.id)
       if (index !== -1) {
-        state.movies.splice(index, 1, updatedMovie)
+        const updatedMovies = [...state.movies]
+        updatedMovies[index] = { ...updatedMovie }
+        state.movies = updatedMovies
       }
     },
     deleteMovie(state, movieId) {

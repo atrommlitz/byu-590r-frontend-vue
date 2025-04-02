@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import { Movie } from '../../services/MovieService'
+import type { Movie } from '../../services/MovieService'
 
 export default defineComponent({
   name: 'MoviesView',
@@ -11,23 +11,24 @@ export default defineComponent({
       valid: true,
       editedIndex: -1,
       editedItem: {
+        id: null,
         title: '',
         year: new Date().getFullYear(),
         genre: '',
-        movie_length: '',
+        movie_length: 0,
         file: null,
-      },
+      } as Movie,
       defaultItem: {
+        id: null,
         title: '',
         year: new Date().getFullYear(),
         genre: '',
-        movie_length: '',
+        movie_length: 0,
         file: null,
-      },
-      fileRules: [
-        (v) => !!v || 'Poster is required',
-        (v) => !v || v.size < 2000000 || 'Poster size should be less than 2 MB!',
-      ],
+      } as Movie,
+      fileRules: [(v) => !!v || 'Poster is required'],
+      errorMessage: '',
+      currentFileName: '',
     }
   },
 
@@ -58,41 +59,58 @@ export default defineComponent({
       this.dialog = true
     },
 
-    openEditDialog(movie) {
+    openEditDialog(movie: Movie) {
       this.editedIndex = this.movies.indexOf(movie)
+      this.currentFileName = movie.file ? movie.file.split('/').pop() || '' : ''
       this.editedItem = {
         id: movie.id,
         title: movie.title,
         year: movie.year,
         genre: movie.genre,
         movie_length: movie.movie_length,
-        file: movie.file,
+        file: null,
       }
       this.dialog = true
     },
 
-    openDeleteDialog(movie) {
+    openDeleteDialog(movie: Movie) {
       this.editedIndex = this.movies.indexOf(movie)
       this.editedItem = Object.assign({}, movie)
       this.deleteDialog = true
     },
 
     async save() {
-      if (this.$refs.form.validate()) {
+      const form = this.$refs.form as any
+      if (form.validate()) {
         try {
           if (this.editedIndex > -1) {
-            console.log('Updating movie:', this.editedItem)
+            const movieData = {
+              title: String(this.editedItem.title),
+              year: Number(this.editedItem.year),
+              genre: String(this.editedItem.genre),
+              movie_length: Number(this.editedItem.movie_length),
+              file: this.editedItem.file || undefined,
+            }
+
             await this.$store.dispatch('movies/updateMovie', {
               id: this.editedItem.id,
-              movieData: this.editedItem,
+              movieData,
             })
           } else {
-            await this.$store.dispatch('movies/createMovie', this.editedItem)
+            const movieData = {
+              title: String(this.editedItem.title),
+              year: Number(this.editedItem.year),
+              genre: String(this.editedItem.genre),
+              movie_length: Number(this.editedItem.movie_length),
+              file: this.editedItem.file,
+            }
+            await this.$store.dispatch('movies/createMovie', movieData)
           }
-          this.close()
           await this.getMovies()
+          this.close()
         } catch (error) {
           console.error('Error saving movie:', error)
+          this.errorMessage = error.message || 'Error saving movie'
         }
       }
     },
@@ -100,26 +118,30 @@ export default defineComponent({
     async deleteItemConfirm() {
       try {
         await this.$store.dispatch('movies/deleteMovie', this.editedItem.id)
-        this.closeDelete()
         await this.getMovies()
+        this.closeDelete()
       } catch (error) {
         console.error('Error deleting movie:', error)
+        this.errorMessage = error.message || 'Error deleting movie'
       }
     },
 
     close() {
-      this.dialog = false
       this.$nextTick(() => {
+        this.dialog = false
         this.editedItem = Object.assign({}, this.defaultItem)
         this.editedIndex = -1
+        this.currentFileName = ''
+        this.errorMessage = ''
       })
     },
 
     closeDelete() {
-      this.deleteDialog = false
       this.$nextTick(() => {
+        this.deleteDialog = false
         this.editedItem = Object.assign({}, this.defaultItem)
         this.editedIndex = -1
+        this.errorMessage = ''
       })
     },
   },
