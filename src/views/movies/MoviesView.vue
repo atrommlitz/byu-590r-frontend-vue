@@ -36,14 +36,61 @@
       </v-col>
     </v-row>
 
-    <!-- Create/Edit Dialog -->
-    <v-dialog v-model="dialog" max-width="500px">
+    <!-- Create Dialog -->
+    <v-dialog v-model="createDialog" max-width="500px">
       <v-card>
-        <v-card-title>
-          {{ editedIndex === -1 ? 'New Movie' : 'Edit Movie' }}
-        </v-card-title>
+        <v-card-title>New Movie</v-card-title>
         <v-card-text>
-          <v-form ref="form">
+          <v-form ref="createForm">
+            <v-text-field
+              v-model="newMovie.title"
+              label="Title"
+              :rules="[(v) => !!v || 'Title is required']"
+            ></v-text-field>
+            <v-text-field
+              v-model="newMovie.year"
+              label="Year"
+              type="number"
+              :rules="[(v) => !!v || 'Year is required']"
+            ></v-text-field>
+            <v-text-field
+              v-model="newMovie.genre"
+              label="Genre"
+              :rules="[(v) => !!v || 'Genre is required']"
+            ></v-text-field>
+            <v-text-field
+              v-model="newMovie.movie_length"
+              label="Length (minutes)"
+              type="number"
+              :rules="[(v) => !!v || 'Length is required']"
+            ></v-text-field>
+            <v-file-input
+              @change="onNewMovieFileChange"
+              :rules="fileRules"
+              accept="image/*"
+              label="Movie Poster"
+              prepend-icon="mdi-camera"
+              required
+            ></v-file-input>
+          </v-form>
+          <v-alert v-if="errorMessage" type="error" dismissible @click="errorMessage = ''">
+            {{ errorMessage }}
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="closeCreateDialog">Cancel</v-btn>
+          <v-btn color="blue darken-1" text @click="saveNew">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Edit Dialog -->
+    <v-dialog v-model="editDialog" max-width="500px">
+      <v-card>
+        <v-card-title>Edit Movie</v-card-title>
+        <v-card-text>
+          <v-form ref="editForm">
             <v-text-field
               v-model="editedItem.title"
               label="Title"
@@ -68,15 +115,11 @@
             ></v-text-field>
             <v-file-input
               v-model="editedItem.file"
-              :rules="fileRules"
               accept="image/*"
               label="Movie Poster"
               prepend-icon="mdi-camera"
-              :required="editedIndex === -1"
-              :hint="
-                editedIndex !== -1 && currentFileName ? 'Current file: ' + currentFileName : ''
-              "
-              :persistent-hint="editedIndex !== -1 && currentFileName !== ''"
+              :hint="currentFileName ? 'Current file: ' + currentFileName : ''"
+              :persistent-hint="!!currentFileName"
             ></v-file-input>
           </v-form>
           <v-alert v-if="errorMessage" type="error" dismissible @click="errorMessage = ''">
@@ -85,8 +128,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
-          <v-btn color="blue darken-1" text @click="save">Save</v-btn>
+          <v-btn color="blue darken-1" text @click="closeEditDialog">Cancel</v-btn>
+          <v-btn color="blue darken-1" text @click="saveEdit">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

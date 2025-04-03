@@ -39,10 +39,6 @@ class MovieService {
         },
       })
       .then((response) => response.data.results)
-      .catch((error) => {
-        console.error('Create movie error:', error.response?.data || error)
-        throw error.response?.data || error
-      })
   }
 
   getMovie(id) {
@@ -55,28 +51,19 @@ class MovieService {
     console.log('MovieService updateMovie:', { id, movieData })
     const formData = new FormData()
 
-    // Add _method field for Laravel method spoofing
     formData.append('_method', 'PUT')
 
-    // Check if file exists before appending
     if (movieData.file) {
       formData.append('file', movieData.file)
     }
 
-    // Ensure all fields are properly appended
     formData.append('title', String(movieData.title))
     formData.append('year', String(movieData.year))
     formData.append('genre', String(movieData.genre))
     formData.append('movie_length', String(movieData.movie_length))
 
-    // Log the complete FormData
-    for (const pair of formData.entries()) {
-      console.log(`FormData: ${pair[0]}: ${pair[1]}`)
-    }
-
     return axios
       .post(API_URL + `movies/${id}`, formData, {
-        // Changed to POST with _method: PUT
         headers: {
           ...authHeader(),
           'Content-Type': 'multipart/form-data',
