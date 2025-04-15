@@ -1,61 +1,60 @@
-import { defineComponent } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue'
 import type { Movie } from '../../services/MovieService'
+import { useStore } from 'vuex'
 
 export default defineComponent({
   name: 'MoviesView',
 
-  data() {
-    return {
-      createDialog: false,
-      editDialog: false,
-      deleteDialog: false,
-      valid: true,
-      newMovie: {
-        id: null,
-        title: '',
-        year: new Date().getFullYear(),
-        genre: '',
-        movie_length: 0,
-        file: '',
-      } as Movie,
-      editedItem: {
-        id: null,
-        title: '',
-        year: new Date().getFullYear(),
-        genre: '',
-        movie_length: 0,
-        file: '',
-      } as Movie,
-      fileRules: [(v) => !!v || 'Poster is required'],
-      errorMessage: '',
-      currentFileName: '',
+  setup() {
+    const store = useStore()
+    const movies = ref<Movie[]>([])
+    const createDialog = ref(false)
+    const editDialog = ref(false)
+    const deleteDialog = ref(false)
+    const valid = ref(true)
+    const newMovie = ref({
+      id: null,
+      title: '',
+      year: new Date().getFullYear(),
+      genre: '',
+      movie_length: 0,
+      file: null,
+    })
+    const editedItem = ref<Movie>({
+      id: null,
+      title: '',
+      year: new Date().getFullYear(),
+      genre: '',
+      movie_length: 0,
+      file: null,
+      file_url: '',
+      director_id: null,
+      rating_id: null,
+    })
+    const fileRules = [(v) => !!v || 'Poster is required']
+    const errorMessage = ref('')
+    const currentFileName = ref('')
+    const editedIndex = ref(-1)
+
+    const fetchMovies = async () => {
+      try {
+        const response = await store.dispatch('movies/fetchMovies')
+        console.log('Fetched movies:', response)
+        movies.value = response
+      } catch (error) {
+        console.error('Error fetching movies:', error)
+        errorMessage.value = 'Error loading movies'
+      }
     }
-  },
 
-  computed: {
-    movies() {
-      return this.$store.state.movies.movies
-    },
-    isLoading() {
-      return this.$store.state.movies.loading
-    },
-    error() {
-      return this.$store.state.movies.error
-    },
-  },
+    onMounted(async () => {
+      console.log('Component mounted')
+      await fetchMovies()
+    })
 
-  created() {
-    this.getMovies()
-  },
-
-  methods: {
-    async getMovies() {
-      await this.$store.dispatch('movies/fetchMovies')
-    },
-
-    openCreateDialog() {
-      this.createDialog = true
-      this.newMovie = {
+    const openCreateDialog = () => {
+      createDialog.value = true
+      newMovie.value = {
         id: null,
         title: '',
         year: new Date().getFullYear(),
@@ -63,31 +62,32 @@ export default defineComponent({
         movie_length: 0,
         file: null,
       }
-    },
+    }
 
-    openEditDialog(movie: Movie) {
-      this.editDialog = true
-      this.currentFileName = movie.file ? movie.file.split('/').pop() || '' : ''
-      this.editedItem = {
+    const openEditDialog = (movie) => {
+      editedItem.value = {
         id: movie.id,
         title: movie.title,
         year: movie.year,
         genre: movie.genre,
         movie_length: movie.movie_length,
         file: null,
+        file_url: movie.file,
+        director_id: movie.director_id,
+        rating_id: movie.rating_id,
       }
-    },
+      editDialog.value = true
+    }
 
-    openDeleteDialog(movie: Movie) {
-      this.editedIndex = this.movies.indexOf(movie)
-      this.editedItem = Object.assign({}, movie)
-      this.deleteDialog = true
-    },
+    const openDeleteDialog = (movie) => {
+      editedItem.value = { ...movie }
+      deleteDialog.value = true
+    }
 
-    closeCreateDialog() {
-      this.createDialog = false
-      this.errorMessage = ''
-      this.newMovie = {
+    const closeCreateDialog = () => {
+      createDialog.value = false
+      errorMessage.value = ''
+      newMovie.value = {
         id: null,
         title: '',
         year: new Date().getFullYear(),
@@ -95,106 +95,145 @@ export default defineComponent({
         movie_length: 0,
         file: null,
       }
-    },
+    }
 
-    closeEditDialog() {
-      this.editDialog = false
-      this.errorMessage = ''
-      this.currentFileName = ''
-      this.editedItem = {
+    const closeEditDialog = () => {
+      editDialog.value = false
+      editedItem.value = {
         id: null,
         title: '',
         year: new Date().getFullYear(),
         genre: '',
         movie_length: 0,
         file: null,
+        file_url: '',
+        director_id: null,
+        rating_id: null,
       }
-    },
+    }
 
-    async saveNew() {
-      const form = this.$refs.createForm as any
-      if (form.validate()) {
-        try {
-          const movieData = {
-            title: String(this.newMovie.title),
-            year: Number(this.newMovie.year),
-            genre: String(this.newMovie.genre),
-            movie_length: Number(this.newMovie.movie_length),
-            file: this.newMovie.file,
-          }
-          await this.$store.dispatch('movies/createMovie', movieData)
-          await this.getMovies()
-          this.closeCreateDialog()
-        } catch (error) {
-          console.error('Error creating movie:', error)
-          this.errorMessage = error.message || 'Error creating movie'
+    const saveNew = async () => {
+      try {
+        const movieData = {
+          title: String(newMovie.value.title),
+          year: Number(newMovie.value.year),
+          genre: String(newMovie.value.genre),
+          movie_length: Number(newMovie.value.movie_length),
+          director_id: 1,
+          rating_id: 1,
         }
-      }
-    },
 
-    async saveEdit() {
-      const form = this.$refs.editForm as any
-      if (form.validate()) {
-        try {
-          const movieData = {
-            title: String(this.editedItem.title),
-            year: Number(this.editedItem.year),
-            genre: String(this.editedItem.genre),
-            movie_length: Number(this.editedItem.movie_length),
-            file: this.editedItem.file || undefined,
-          }
-          await this.$store.dispatch('movies/updateMovie', {
-            id: this.editedItem.id,
-            movieData,
-          })
-          await this.getMovies()
-          this.closeEditDialog()
-        } catch (error) {
-          console.error('Error updating movie:', error)
-          this.errorMessage = error.message || 'Error updating movie'
+        // Only add file if one was selected
+        if (newMovie.value.file instanceof File) {
+          movieData.file = newMovie.value.file
         }
-      }
-    },
 
-    onNewMovieFileChange(event) {
-      this.newMovie.file = null
+        console.log('Creating new movie with data:', movieData)
+
+        await store.dispatch('movies/createMovie', movieData)
+        await fetchMovies()
+        closeCreateDialog()
+      } catch (error) {
+        console.error('Error creating movie:', error)
+        errorMessage.value = error.message || 'Error creating movie'
+      }
+    }
+
+    const saveEdit = async () => {
+      try {
+        const movieData = {
+          id: editedItem.value.id,
+          title: String(editedItem.value.title),
+          year: Number(editedItem.value.year),
+          genre: String(editedItem.value.genre),
+          movie_length: Number(editedItem.value.movie_length),
+          director_id: editedItem.value.director_id ? Number(editedItem.value.director_id) : null,
+          title: editedItem.value.title,
+          year: editedItem.value.year,
+          genre: editedItem.value.genre,
+          movie_length: editedItem.value.movie_length,
+          director_id: editedItem.value.director_id,
+          rating_id: editedItem.value.rating_id,
+        }
+
+        if (editedItem.value.file) {
+          movieData.file = editedItem.value.file
+        }
+
+        await store.dispatch('movies/updateMovie', movieData)
+        await fetchMovies()
+        editDialog.value = false
+      } catch (error) {
+        console.error('Error updating movie:', error)
+      }
+    }
+
+    const onNewMovieFileChange = (event) => {
+      newMovie.value.file = null
 
       if (!event || !event.target || !event.target.files) return // Safety check
 
       const image = event.target.files || event.dataTransfer.files
       if (!image.length) return
 
-      this.newMovie.file = image[0]
-    },
+      newMovie.value.file = image[0]
+    }
 
-    async deleteItemConfirm() {
+    const closeDelete = () => {
+      deleteDialog.value = false
+      editedItem.value = {
+        id: null,
+        title: '',
+        year: new Date().getFullYear(),
+        genre: '',
+        movie_length: 0,
+        file: null,
+        file_url: '',
+        director_id: null,
+        rating_id: null,
+      }
+    }
+
+    const deleteItemConfirm = async () => {
       try {
-        await this.$store.dispatch('movies/deleteMovie', this.editedItem.id)
-        await this.getMovies()
-        this.closeDelete()
+        await store.dispatch('movies/deleteMovie', editedItem.value.id)
+        await fetchMovies()
+        closeDelete()
       } catch (error) {
         console.error('Error deleting movie:', error)
-        this.errorMessage = error.message || 'Error deleting movie'
+        errorMessage.value = 'Error deleting movie'
       }
-    },
+    }
 
-    close() {
-      this.$nextTick(() => {
-        this.dialog = false
-        this.editedItem = Object.assign({}, this.defaultItem)
-        this.editedIndex = -1
-        this.currentFileName = ''
-        this.errorMessage = ''
-      })
-    },
+    const handleImageError = (event) => {
+      console.error('Image failed to load:', event)
+      // Optionally set a fallback image
+      event.target.src = '/path/to/fallback/image.jpg'
+    }
 
-    closeDelete() {
-      this.$nextTick(() => {
-        this.deleteDialog = false
-        this.editedItem = Object.assign({}, this.defaultItem)
-        this.editedIndex = -1
-        this.errorMessage = ''
-      })
-    },
+    return {
+      movies,
+      createDialog,
+      editDialog,
+      deleteDialog,
+      valid,
+      newMovie,
+      editedItem,
+      fileRules,
+      errorMessage,
+      currentFileName,
+      editedIndex,
+      openCreateDialog,
+      openEditDialog,
+      openDeleteDialog,
+      closeCreateDialog,
+      closeEditDialog,
+      saveNew,
+      saveEdit,
+      onNewMovieFileChange,
+      deleteItemConfirm,
+      closeDelete,
+      handleImageError,
+    }
   },
 })

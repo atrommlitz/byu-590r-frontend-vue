@@ -173,7 +173,7 @@ export default {
     </v-app-bar>
 
     <v-main>
-      <v-container>
+      <v-container fluid>
         <div v-if="isAuthenticated">
           <RouterView />
         </div>

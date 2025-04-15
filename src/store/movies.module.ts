@@ -19,10 +19,11 @@ export const movies = {
       return movieService.getAllMovies().then(
         (movies) => {
           commit('setMovies', movies)
-          return Promise.resolve(movies)
+          return movies
         },
-        (response) => {
-          return Promise.resolve(response)
+        (error) => {
+          console.error('Error in fetchMovies:', error)
+          return Promise.reject(error)
         }
       )
     },
@@ -46,10 +47,10 @@ export const movies = {
         }
       )
     },
-    updateMovie({ commit }, { id, movieData }) {
-      console.log('Store updateMovie action:', { id, movieData })
+    updateMovie({ commit }, movieData) {
+      console.log('Store updateMovie action:', movieData)
       return movieService
-        .updateMovie(id, movieData)
+        .updateMovie(movieData.id, movieData)
         .then((movie) => {
           console.log('Update successful, committing:', movie)
           commit('updateMovie', movie)
@@ -72,7 +73,7 @@ export const movies = {
   },
   mutations: {
     setMovies(state, movies) {
-      state.movies = [...movies]
+      state.movies = movies
     },
     setMovie(state, movie) {
       state.movie = movie

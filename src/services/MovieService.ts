@@ -2,6 +2,8 @@ import axios from 'axios'
 import API_URL from './env'
 import authHeader from './auth-header'
 
+console.log('API_URL being used:', API_URL)
+
 export interface Movie {
   id: number | null
   title: string
@@ -13,23 +15,35 @@ export interface Movie {
 
 class MovieService {
   getAllMovies() {
-    return axios.get(API_URL + 'movies', { headers: authHeader() }).then((response) => {
-      return response.data.results
-    })
+    return axios
+      .get(API_URL + 'movies', { headers: authHeader() })
+      .then((response) => {
+        // Return just the results array
+        return response.data.results
+      })
+      .catch((error) => {
+        console.error('API Error:', error)
+        throw error
+      })
   }
 
   createMovie(movieData) {
     const formData = new FormData()
 
-    // Check if file exists before appending
-    if (movieData.file) {
-      formData.append('file', movieData.file)
-    }
+    console.log('Creating movie with data:', movieData)
 
+    // Always append these required fields
     formData.append('title', String(movieData.title))
     formData.append('year', String(movieData.year))
     formData.append('genre', String(movieData.genre))
     formData.append('movie_length', String(movieData.movie_length))
+    formData.append('director_id', String(movieData.director_id))
+    formData.append('rating_id', String(movieData.rating_id))
+
+    // Only append file if it exists and is a File object
+    if (movieData.file instanceof File) {
+      formData.append('file', movieData.file)
+    }
 
     return axios
       .post(API_URL + 'movies', formData, {
@@ -38,7 +52,22 @@ class MovieService {
           'Content-Type': 'multipart/form-data',
         },
       })
-      .then((response) => response.data.results)
+      .then((response) => {
+        console.log('Create response:', response.data)
+        if (response.data.success) {
+          return response.data.results
+        }
+        throw new Error(response.data.message || 'Failed to create movie')
+      })
+      .catch((error) => {
+        console.error('Create movie error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          config: error.config,
+        })
+        throw error
+      })
   }
 
   getMovie(id) {
@@ -53,14 +82,24 @@ class MovieService {
 
     formData.append('_method', 'PUT')
 
-    if (movieData.file) {
-      formData.append('file', movieData.file)
-    }
-
+    // Always append these fields
     formData.append('title', String(movieData.title))
     formData.append('year', String(movieData.year))
     formData.append('genre', String(movieData.genre))
     formData.append('movie_length', String(movieData.movie_length))
+
+    // Append director_id and rating_id if they exist
+    if (movieData.director_id) {
+      formData.append('director_id', String(movieData.director_id))
+    }
+    if (movieData.rating_id) {
+      formData.append('rating_id', String(movieData.rating_id))
+    }
+
+    // Only append file if a new one is selected
+    if (movieData.file instanceof File) {
+      formData.append('file', movieData.file)
+    }
 
     return axios
       .post(API_URL + `movies/${id}`, formData, {
@@ -74,22 +113,11 @@ class MovieService {
         if (!response.data.success) {
           throw new Error(response.data.message || 'Update failed')
         }
-        const updatedMovie = {
-          ...movieData,
-          id: Number(id),
-          file: response.data.results.file,
-        }
-        console.log('Processed updated movie:', updatedMovie)
-        return updatedMovie
+        return response.data.results
       })
       .catch((error) => {
-        console.error('Update movie error details:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-        })
-        throw error.response?.data || error
+        console.error('Update movie error:', error)
+        throw error
       })
   }
 
