@@ -148,15 +148,11 @@ export default defineComponent({
           genre: String(editedItem.value.genre),
           movie_length: Number(editedItem.value.movie_length),
           director_id: editedItem.value.director_id ? Number(editedItem.value.director_id) : null,
-          title: editedItem.value.title,
-          year: editedItem.value.year,
-          genre: editedItem.value.genre,
-          movie_length: editedItem.value.movie_length,
-          director_id: editedItem.value.director_id,
           rating_id: editedItem.value.rating_id,
         }
 
-        if (editedItem.value.file) {
+        // Only add file if one was selected
+        if (editedItem.value.file instanceof File) {
           movieData.file = editedItem.value.file
         }
 
