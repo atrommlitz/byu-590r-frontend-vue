@@ -10,7 +10,18 @@ export interface Movie {
   year: number
   genre: string
   movie_length: number
-  file: string | null
+  file: string | File | null
+  file_url?: string
+  director_id?: number | null
+  rating_id?: number | null
+}
+
+export interface Director {
+  id: number | null
+  full_name: string
+  age: number | null
+  history: string
+  nationality: string
 }
 
 class MovieService {
@@ -127,6 +138,35 @@ class MovieService {
         headers: authHeader(),
       })
       .then((response) => response.data.results)
+  }
+
+  getAllDirectors() {
+    return axios
+      .get(API_URL + 'directors', { headers: authHeader() })
+      .then((response) => {
+        return response.data.results
+      })
+      .catch((error) => {
+        console.error('API Error:', error)
+        throw error
+      })
+  }
+
+  createDirector(directorData: Partial<Director>) {
+    return axios
+      .post(API_URL + 'directors', directorData, {
+        headers: authHeader(),
+      })
+      .then((response) => {
+        if (response.data.success) {
+          return response.data.results
+        }
+        throw new Error(response.data.message || 'Failed to create director')
+      })
+      .catch((error) => {
+        console.error('Create director error:', error)
+        throw error
+      })
   }
 }
 

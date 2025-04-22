@@ -67,6 +67,28 @@
               required
             ></v-text-field>
 
+            <v-select
+              v-model="newMovie.director_id"
+              :items="directors"
+              item-title="full_name"
+              item-value="id"
+              label="Director"
+              dense
+              required
+            >
+              <template v-slot:append-item>
+                <v-list-item
+                  title="Add New Director"
+                  @click="openNewDirectorDialog"
+                  class="add-director-item"
+                >
+                  <template v-slot:prepend>
+                    <v-icon>mdi-plus</v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-select>
+
             <v-file-input
               v-model="newMovie.file"
               label="Movie Cover (Optional)"
@@ -103,6 +125,27 @@
               type="number"
               dense
             ></v-text-field>
+
+            <v-select
+              v-model="editedItem.director_id"
+              :items="directors"
+              item-title="full_name"
+              item-value="id"
+              label="Director"
+              dense
+            >
+              <template v-slot:append-item>
+                <v-list-item
+                  title="Add New Director"
+                  @click="openNewDirectorDialog"
+                  class="add-director-item"
+                >
+                  <template v-slot:prepend>
+                    <v-icon>mdi-plus</v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-select>
 
             <!-- Current image preview -->
             <div v-if="editedItem.file_url" class="mb-4">
@@ -141,6 +184,49 @@
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="flat" @click="closeDelete">Cancel</v-btn>
           <v-btn color="error" variant="flat" @click="deleteItemConfirm">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- New Director Dialog -->
+    <v-dialog v-model="newDirectorDialog" max-width="400px">
+      <v-card>
+        <v-card-title>Add New Director</v-card-title>
+        <v-card-text>
+          <v-form v-model="valid">
+            <v-text-field
+              v-model="newDirector.full_name"
+              label="Full Name"
+              :rules="[(v) => !!v || 'Full name is required']"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="newDirector.age"
+              label="Age"
+              type="number"
+              :rules="[(v) => !!v || 'Age is required']"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="newDirector.history"
+              label="History"
+              :rules="[(v) => !!v || 'History is required']"
+              required
+            ></v-text-field>
+            <v-text-field
+              v-model="newDirector.nationality"
+              label="Nationality"
+              :rules="[(v) => !!v || 'Nationality is required']"
+              required
+            ></v-text-field>
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="flat" @click="saveNewDirector" :disabled="!valid"
+            >Save</v-btn
+          >
+          <v-btn color="error" variant="flat" @click="closeNewDirectorDialog">Cancel</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

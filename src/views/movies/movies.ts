@@ -1,6 +1,9 @@
 import { defineComponent, ref, onMounted } from 'vue'
-import type { Movie } from '../../services/MovieService'
+import type { Movie, Director } from '../../services/MovieService'
 import { useStore } from 'vuex'
+import axios from 'axios'
+import authHeader from '../../services/auth-header'
+import movieService from '../../services/MovieService'
 
 export default defineComponent({
   name: 'MoviesView',
@@ -8,17 +11,21 @@ export default defineComponent({
   setup() {
     const store = useStore()
     const movies = ref<Movie[]>([])
+    const directors = ref<Director[]>([])
     const createDialog = ref(false)
     const editDialog = ref(false)
     const deleteDialog = ref(false)
+    const newDirectorDialog = ref(false)
     const valid = ref(true)
-    const newMovie = ref({
+    const newMovie = ref<Movie>({
       id: null,
       title: '',
       year: new Date().getFullYear(),
       genre: '',
       movie_length: 0,
       file: null,
+      director_id: null,
+      rating_id: null,
     })
     const editedItem = ref<Movie>({
       id: null,
@@ -31,10 +38,25 @@ export default defineComponent({
       director_id: null,
       rating_id: null,
     })
+    const newDirector = ref<Partial<Director>>({
+      full_name: '',
+      age: null,
+      history: '',
+      nationality: '',
+    })
     const fileRules = [(v) => !!v || 'Poster is required']
     const errorMessage = ref('')
     const currentFileName = ref('')
     const editedIndex = ref(-1)
+
+    const fetchDirectors = async () => {
+      try {
+        const response = await movieService.getAllDirectors()
+        directors.value = response
+      } catch (error) {
+        console.error('Error fetching directors:', error)
+      }
+    }
 
     const fetchMovies = async () => {
       try {
@@ -49,7 +71,7 @@ export default defineComponent({
 
     onMounted(async () => {
       console.log('Component mounted')
-      await fetchMovies()
+      await Promise.all([fetchMovies(), fetchDirectors()])
     })
 
     const openCreateDialog = () => {
@@ -61,10 +83,51 @@ export default defineComponent({
         genre: '',
         movie_length: 0,
         file: null,
+        director_id: null,
+        rating_id: null,
       }
     }
 
-    const openEditDialog = (movie) => {
+    const openNewDirectorDialog = () => {
+      newDirectorDialog.value = true
+      newDirector.value = {
+        full_name: '',
+        age: null,
+        history: '',
+        nationality: '',
+      }
+    }
+
+    const closeNewDirectorDialog = () => {
+      newDirectorDialog.value = false
+      newDirector.value = {
+        full_name: '',
+        age: null,
+        history: '',
+        nationality: '',
+      }
+    }
+
+    const saveNewDirector = async () => {
+      try {
+        const response = await movieService.createDirector(newDirector.value)
+        await fetchDirectors()
+
+        // Set the newly created director as the selected director
+        if (createDialog.value) {
+          newMovie.value.director_id = response.id
+        } else if (editDialog.value) {
+          editedItem.value.director_id = response.id
+        }
+
+        closeNewDirectorDialog()
+      } catch (error) {
+        console.error('Error creating director:', error)
+        errorMessage.value = error.message || 'Error creating director'
+      }
+    }
+
+    const openEditDialog = (movie: Movie) => {
       editedItem.value = {
         id: movie.id,
         title: movie.title,
@@ -94,6 +157,8 @@ export default defineComponent({
         genre: '',
         movie_length: 0,
         file: null,
+        director_id: null,
+        rating_id: null,
       }
     }
 
@@ -119,7 +184,7 @@ export default defineComponent({
           year: Number(newMovie.value.year),
           genre: String(newMovie.value.genre),
           movie_length: Number(newMovie.value.movie_length),
-          director_id: 1,
+          director_id: newMovie.value.director_id ? Number(newMovie.value.director_id) : null,
           rating_id: 1,
         }
 
@@ -209,12 +274,15 @@ export default defineComponent({
 
     return {
       movies,
+      directors,
       createDialog,
       editDialog,
       deleteDialog,
+      newDirectorDialog,
       valid,
       newMovie,
       editedItem,
+      newDirector,
       fileRules,
       errorMessage,
       currentFileName,
@@ -230,6 +298,9 @@ export default defineComponent({
       deleteItemConfirm,
       closeDelete,
       handleImageError,
+      openNewDirectorDialog,
+      closeNewDirectorDialog,
+      saveNewDirector,
     }
   },
 })
