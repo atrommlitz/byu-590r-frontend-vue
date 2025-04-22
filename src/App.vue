@@ -26,6 +26,7 @@ export default {
       showChangeEmailTextField: false,
       changeEmail: false,
       successVerificationMessage: '',
+      uploadErrorMessage: '',
       changeEmailRules: [
         (value) => !!value || 'Required.',
         (value) => (value && value.length >= 3) || 'Min 3 characters',
@@ -85,6 +86,7 @@ export default {
 
       if (!image.length) return
       this.profileIsUploading = true
+      this.uploadErrorMessage = ''
       this.$store
         .dispatch('user/uploadAvatar', image[0], { root: true })
         .then((response) => {
@@ -95,12 +97,13 @@ export default {
         })
         .catch((error) => {
           console.error('Upload error:', error)
-          alert('Failed to upload image. Please try again.')
+          this.uploadErrorMessage = 'Failed to upload image. Please try again.'
           this.profileIsUploading = false
         })
     },
     removeAvatar() {
       this.profileIsUploading = true
+      this.uploadErrorMessage = ''
       this.$store
         .dispatch('user/removeAvatar')
         .then((response) => {
@@ -109,7 +112,7 @@ export default {
         })
         .catch((error) => {
           console.log(error)
-          alert('Error. Try again')
+          this.uploadErrorMessage = 'Error removing profile picture. Please try again.'
           this.profileIsUploading = false
         })
     },
@@ -196,6 +199,9 @@ export default {
                 @change="onAvatarChange"
                 :label="profilePictureChangeLabel"
               ></v-file-input>
+              <v-alert v-if="uploadErrorMessage" type="error" variant="tonal" class="mt-2">
+                {{ uploadErrorMessage }}
+              </v-alert>
             </v-card>
             <v-card-actions>
               <v-btn @click="removeAvatar">Remove Profile Picture</v-btn>
