@@ -28,12 +28,23 @@
                   />
 
                   <v-alert
-                    class="ma-2 pa-2"
-                    v-if="errorMsg !== ''"
-                    :type="alertType"
-                    @click="errorMsg = ''"
+                    v-if="errorMsg"
+                    type="error"
+                    class="mb-4"
+                    dismissible
+                    @input="errorMsg = ''"
                   >
                     {{ errorMsg }}
+                  </v-alert>
+
+                  <v-alert
+                    v-if="successMsg"
+                    type="success"
+                    class="mb-4"
+                    dismissible
+                    @input="successMsg = ''"
+                  >
+                    {{ successMsg }}
                   </v-alert>
                 </div>
 

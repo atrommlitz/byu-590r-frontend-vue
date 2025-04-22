@@ -46,8 +46,17 @@
       <v-card class="create-movie-dialog">
         <v-card-title>Create New Movie</v-card-title>
         <v-card-text>
-          <v-form>
-            <v-text-field v-model="newMovie.title" label="Title" dense required></v-text-field>
+          <v-form v-model="valid">
+            <v-text-field
+              v-model="newMovie.title"
+              label="Title"
+              dense
+              required
+              :rules="[
+                (v) => !!v || 'Title is required',
+                (v) => (v && v.length >= 2) || 'Title must be at least 2 characters',
+              ]"
+            ></v-text-field>
 
             <v-text-field
               v-model="newMovie.year"
@@ -55,9 +64,23 @@
               type="number"
               dense
               required
+              :rules="[
+                (v) => !!v || 'Year is required',
+                (v) => v >= 1888 || 'Year must be after 1888',
+                (v) => v <= new Date().getFullYear() || 'Year cannot be in the future',
+              ]"
             ></v-text-field>
 
-            <v-text-field v-model="newMovie.genre" label="Genre" dense required></v-text-field>
+            <v-text-field
+              v-model="newMovie.genre"
+              label="Genre"
+              dense
+              required
+              :rules="[
+                (v) => !!v || 'Genre is required',
+                (v) => (v && v.length >= 2) || 'Genre must be at least 2 characters',
+              ]"
+            ></v-text-field>
 
             <v-text-field
               v-model="newMovie.movie_length"
@@ -65,6 +88,11 @@
               type="number"
               dense
               required
+              :rules="[
+                (v) => !!v || 'Length is required',
+                (v) => v > 0 || 'Length must be greater than 0',
+                (v) => v <= 600 || 'Length must be less than 600 minutes',
+              ]"
             ></v-text-field>
 
             <v-select
@@ -75,6 +103,7 @@
               label="Director"
               dense
               required
+              :rules="[(v) => !!v || 'Director is required']"
             >
               <template v-slot:append-item>
                 <v-list-item
@@ -97,6 +126,7 @@
               label="Rating"
               dense
               required
+              :rules="[(v) => !!v || 'Rating is required']"
             ></v-select>
 
             <v-file-input
@@ -106,12 +136,23 @@
               :placeholder="newMovie.file ? newMovie.file.name : 'Select an image'"
               prepend-icon="$file"
               dense
+              :rules="[
+                (value) => !value || value.size < 5000000 || 'Image size should be less than 5 MB!',
+                (value) => !value || value.type.startsWith('image/') || 'File must be an image!',
+              ]"
             ></v-file-input>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" variant="flat" @click="saveNew">Save</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            @click="saveNew"
+            :disabled="!valid || profileIsUploading"
+            :loading="profileIsUploading"
+            >Save</v-btn
+          >
           <v-btn color="error" variant="flat" @click="closeCreateDialog">Cancel</v-btn>
         </v-card-actions>
       </v-card>
@@ -122,18 +163,49 @@
       <v-card class="edit-dialog">
         <v-card-title>Edit Movie</v-card-title>
         <v-card-text>
-          <v-form>
-            <v-text-field v-model="editedItem.title" label="Title" dense></v-text-field>
+          <v-form v-model="valid">
+            <v-text-field
+              v-model="editedItem.title"
+              label="Title"
+              dense
+              :rules="[
+                (v) => !!v || 'Title is required',
+                (v) => (v && v.length >= 2) || 'Title must be at least 2 characters',
+              ]"
+            ></v-text-field>
 
-            <v-text-field v-model="editedItem.year" label="Year" type="number" dense></v-text-field>
+            <v-text-field
+              v-model="editedItem.year"
+              label="Year"
+              type="number"
+              dense
+              :rules="[
+                (v) => !!v || 'Year is required',
+                (v) => v >= 1888 || 'Year must be after 1888',
+                (v) => v <= new Date().getFullYear() || 'Year cannot be in the future',
+              ]"
+            ></v-text-field>
 
-            <v-text-field v-model="editedItem.genre" label="Genre" dense></v-text-field>
+            <v-text-field
+              v-model="editedItem.genre"
+              label="Genre"
+              dense
+              :rules="[
+                (v) => !!v || 'Genre is required',
+                (v) => (v && v.length >= 2) || 'Genre must be at least 2 characters',
+              ]"
+            ></v-text-field>
 
             <v-text-field
               v-model="editedItem.movie_length"
               label="Length (minutes)"
               type="number"
               dense
+              :rules="[
+                (v) => !!v || 'Length is required',
+                (v) => v > 0 || 'Length must be greater than 0',
+                (v) => v <= 600 || 'Length must be less than 600 minutes',
+              ]"
             ></v-text-field>
 
             <v-select
@@ -143,6 +215,7 @@
               item-value="id"
               label="Director"
               dense
+              :rules="[(v) => !!v || 'Director is required']"
             >
               <template v-slot:append-item>
                 <v-list-item
@@ -164,6 +237,7 @@
               item-value="id"
               label="Rating"
               dense
+              :rules="[(v) => !!v || 'Rating is required']"
             ></v-select>
 
             <!-- Current image preview -->
@@ -183,12 +257,23 @@
               :placeholder="editedItem.file ? editedItem.file.name : 'Select new image'"
               prepend-icon="$file"
               dense
+              :rules="[
+                (value) => !value || value.size < 5000000 || 'Image size should be less than 5 MB!',
+                (value) => !value || value.type.startsWith('image/') || 'File must be an image!',
+              ]"
             ></v-file-input>
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" variant="flat" @click="saveEdit">Save</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            @click="saveEdit"
+            :disabled="!valid || profileIsUploading"
+            :loading="profileIsUploading"
+            >Save</v-btn
+          >
           <v-btn color="error" variant="flat" @click="closeEditDialog">Cancel</v-btn>
         </v-card-actions>
       </v-card>

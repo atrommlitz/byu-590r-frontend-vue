@@ -6,6 +6,7 @@ export default {
       isAuthenticated: false,
       alertType: 'error',
       errorMsg: '',
+      successMsg: '',
       password: '',
       email: '',
       forgotEmail: '',
@@ -112,15 +113,17 @@ export default {
       }
 
       this.registerFormIsLoading = true
+      this.errorMsg = ''
+      this.successMsg = ''
       this.$store.dispatch('auth/register', register).then(
         () => {
-          alert('success!')
+          this.successMsg = 'Registration successful! You can now log in.'
           this.registerFormIsLoading = false
           this.registerDialog = false
         },
         (error) => {
           this.registerFormIsLoading = false
-          alert('error!')
+          this.errorMsg = error.response?.data?.message || 'Registration failed. Please try again.'
         }
       )
     },

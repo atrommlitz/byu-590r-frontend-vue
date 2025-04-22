@@ -18,7 +18,8 @@ export default defineComponent({
     const editDialog = ref(false)
     const deleteDialog = ref(false)
     const newDirectorDialog = ref(false)
-    const valid = ref(true)
+    const valid = ref(false)
+    const profileIsUploading = ref(false)
     const newMovie = ref<Movie>({
       id: null,
       title: '',
@@ -292,6 +293,7 @@ export default defineComponent({
       deleteDialog,
       newDirectorDialog,
       valid,
+      profileIsUploading,
       newMovie,
       editedItem,
       newDirector,

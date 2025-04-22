@@ -27,9 +27,15 @@ export default {
       changeEmail: false,
       successVerificationMessage: '',
       uploadErrorMessage: '',
+      valid: false,
       changeEmailRules: [
         (value) => !!value || 'Required.',
         (value) => (value && value.length >= 3) || 'Min 3 characters',
+        (value) => {
+          const pattern =
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+          return pattern.test(value) || 'Invalid email format'
+        },
       ],
       profile: {
         avatar: '',
@@ -184,7 +190,7 @@ export default {
       </v-container>
 
       <v-dialog v-model="profileDialog">
-        <v-form>
+        <v-form v-model="valid">
           <v-card>
             <v-card-title>Profile</v-card-title>
             <v-card-subtitle> Enter your profile options Here </v-card-subtitle>
@@ -198,13 +204,24 @@ export default {
                 :disabled="profileIsUploading"
                 @change="onAvatarChange"
                 :label="profilePictureChangeLabel"
+                :rules="[
+                  (value) =>
+                    !value || value.size < 2000000 || 'Avatar size should be less than 2 MB!',
+                  (value) => !value || value.type.startsWith('image/') || 'File must be an image!',
+                ]"
               ></v-file-input>
               <v-alert v-if="uploadErrorMessage" type="error" variant="tonal" class="mt-2">
                 {{ uploadErrorMessage }}
               </v-alert>
             </v-card>
             <v-card-actions>
-              <v-btn @click="removeAvatar">Remove Profile Picture</v-btn>
+              <v-btn
+                @click="removeAvatar"
+                :disabled="profileIsUploading || !avatarURL"
+                :loading="profileIsUploading"
+              >
+                Remove Profile Picture
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-form>
