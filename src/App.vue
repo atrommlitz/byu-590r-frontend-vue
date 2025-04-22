@@ -68,7 +68,7 @@ export default {
   },
   updated() {
     if (this.isAuthenticated) {
-      this.$router.push({ name: 'home' })
+      this.$router.push('/')
     }
   },
   created() {
@@ -141,7 +141,7 @@ export default {
   <v-app :theme="theme">
     <v-app-bar v-if="isAuthenticated">
       <v-spacer></v-spacer>
-      <v-btn to="home" default>Home</v-btn>
+      <v-btn to="/" default>Home</v-btn>
       <v-btn to="about">About</v-btn>
       <v-btn to="movies">Movies</v-btn>
       <v-menu min-width="200px" rounded>
