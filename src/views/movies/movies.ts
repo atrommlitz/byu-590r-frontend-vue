@@ -1,9 +1,10 @@
 import { defineComponent, ref, onMounted } from 'vue'
-import type { Movie, Director } from '../../services/MovieService'
+import type { Movie, Director, Rating } from '../../services/MovieService'
 import { useStore } from 'vuex'
 import axios from 'axios'
 import authHeader from '../../services/auth-header'
 import movieService from '../../services/MovieService'
+import API_URL from '../../services/env'
 
 export default defineComponent({
   name: 'MoviesView',
@@ -12,6 +13,7 @@ export default defineComponent({
     const store = useStore()
     const movies = ref<Movie[]>([])
     const directors = ref<Director[]>([])
+    const ratings = ref<Rating[]>([])
     const createDialog = ref(false)
     const editDialog = ref(false)
     const deleteDialog = ref(false)
@@ -49,6 +51,15 @@ export default defineComponent({
     const currentFileName = ref('')
     const editedIndex = ref(-1)
 
+    const fetchRatings = async () => {
+      try {
+        const response = await axios.get(API_URL + 'ratings', { headers: authHeader() })
+        ratings.value = response.data.results
+      } catch (error) {
+        console.error('Error fetching ratings:', error)
+      }
+    }
+
     const fetchDirectors = async () => {
       try {
         const response = await movieService.getAllDirectors()
@@ -71,7 +82,7 @@ export default defineComponent({
 
     onMounted(async () => {
       console.log('Component mounted')
-      await Promise.all([fetchMovies(), fetchDirectors()])
+      await Promise.all([fetchMovies(), fetchDirectors(), fetchRatings()])
     })
 
     const openCreateDialog = () => {
@@ -135,7 +146,7 @@ export default defineComponent({
         genre: movie.genre,
         movie_length: movie.movie_length,
         file: null,
-        file_url: movie.file,
+        file_url: movie.file as string,
         director_id: movie.director_id,
         rating_id: movie.rating_id,
       }
@@ -185,7 +196,7 @@ export default defineComponent({
           genre: String(newMovie.value.genre),
           movie_length: Number(newMovie.value.movie_length),
           director_id: newMovie.value.director_id ? Number(newMovie.value.director_id) : null,
-          rating_id: 1,
+          rating_id: newMovie.value.rating_id ? Number(newMovie.value.rating_id) : null,
         }
 
         // Only add file if one was selected
@@ -213,7 +224,7 @@ export default defineComponent({
           genre: String(editedItem.value.genre),
           movie_length: Number(editedItem.value.movie_length),
           director_id: editedItem.value.director_id ? Number(editedItem.value.director_id) : null,
-          rating_id: editedItem.value.rating_id,
+          rating_id: editedItem.value.rating_id ? Number(editedItem.value.rating_id) : null,
         }
 
         // Only add file if one was selected
@@ -275,6 +286,7 @@ export default defineComponent({
     return {
       movies,
       directors,
+      ratings,
       createDialog,
       editDialog,
       deleteDialog,

@@ -89,6 +89,16 @@
               </template>
             </v-select>
 
+            <v-select
+              v-model="newMovie.rating_id"
+              :items="ratings"
+              item-title="name"
+              item-value="id"
+              label="Rating"
+              dense
+              required
+            ></v-select>
+
             <v-file-input
               v-model="newMovie.file"
               label="Movie Cover (Optional)"
@@ -146,6 +156,15 @@
                 </v-list-item>
               </template>
             </v-select>
+
+            <v-select
+              v-model="editedItem.rating_id"
+              :items="ratings"
+              item-title="name"
+              item-value="id"
+              label="Rating"
+              dense
+            ></v-select>
 
             <!-- Current image preview -->
             <div v-if="editedItem.file_url" class="mb-4">

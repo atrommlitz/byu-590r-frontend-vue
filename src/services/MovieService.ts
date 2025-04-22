@@ -14,6 +14,8 @@ export interface Movie {
   file_url?: string
   director_id?: number | null
   rating_id?: number | null
+  director?: Director
+  rating?: Rating
 }
 
 export interface Director {
@@ -22,6 +24,11 @@ export interface Director {
   age: number | null
   history: string
   nationality: string
+}
+
+export interface Rating {
+  id: number | null
+  name: string
 }
 
 class MovieService {
